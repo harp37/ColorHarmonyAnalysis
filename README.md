@@ -105,4 +105,4 @@ Inspiration from modern design tools and color pickers
 Built with pure JavaScript, HTML and CSS
 
 
-Made with ❤️ by [Anthony Huben]
+Made with ❤️ by Anthony Huben
