@@ -1,11 +1,11 @@
-🎨 Color Harmony Analysis
+🎨 **Color Harmony Analysis**
 
 Discover, analyze, and harmonize colors from any image with this powerful color analysis tool
 
 ✨ Overview
-Color Harmony Picker is an elegant, intuitive web application that lets you extract color palettes from your images, understand their emotional impact, and generate harmonious color schemes for your designs. Built with a focus on both aesthetics and functionality, this tool helps designers, artists, and color enthusiasts make informed color decisions.
-🚀 Key Features
+Color Harmony Analysis is an elegant, intuitive web application that lets you extract color palettes from your images, understand their emotional impact, and generate harmonious color schemes for your designs. Built with a focus on both aesthetics and functionality, this tool helps designers, artists, and color enthusiasts make informed color decisions.
 
+🚀 Key Features
 🖼️ Instant Color Extraction - Upload any PNG image and automatically extract its dominant colors
 🌈 Color Harmony Generation - Create complementary, analogous, triadic, and monochromatic color schemes
 😊 Emotional Color Analysis - Understand the psychological impact of each color in your palette
@@ -15,7 +15,7 @@ Color Harmony Picker is an elegant, intuitive web application that lets you extr
 📄 PDF Report Generation - Download comprehensive color analysis reports for your projects or clients
 
 🛠️ Installation
-Getting started with Color Harmony Picker is incredibly simple:
+Getting started with Color Harmony Analysis is incredibly simple:
 
 Clone this repository:
 bashCopygit clone https://github.com/harp37/ColorHarmonyAnalysis.git
@@ -54,7 +54,7 @@ Monochromatic - Different shades and tints of the same color
 Palette Description - A detailed analysis of your color palette's emotional impact and potential applications
 
 🧠 How It Works
-Color Harmony Picker uses sophisticated algorithms to analyze your images:
+Color Harmony Analysis uses sophisticated algorithms to analyze your images:
 
 Color Extraction - The application samples pixels from your image and groups similar colors using a quantization algorithm
 Emotional Analysis - Each color is analyzed based on its hue, saturation, and brightness to determine its psychological impact
@@ -69,7 +69,7 @@ Color Harmonies - Specific relationships between colors on the color wheel creat
 HSL Color Space - Analyzing colors by hue, saturation, and lightness provides insight into their visual and emotional impact
 
 💡 Applications
-Color Harmony Picker is perfect for:
+Color Harmony Analysis is perfect for:
 
 Designers creating cohesive brand identities or UI color schemes
 Artists exploring color palettes for their artwork
@@ -101,7 +101,7 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 🎉 Acknowledgments
 
 Color theory principles from traditional and digital design
-Inspiration from modern design tools and color pickers
+Inspiration from modern design tools and color Analysiss
 Built with pure JavaScript, HTML and CSS
 
 
