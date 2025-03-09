@@ -1,0 +1,1839 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Color Harmony Picker</title>
+    <!-- External libraries -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0;
+            background-color: #E5F4F4; /* Light mint/cyan background from screenshot */
+            color: #333;
+        }
+        h1, h2, h3 {
+            color: #1F2E2E; /* Dark teal from screenshot */
+        }
+        header {
+            background-color: #1F2E2E; /* Dark teal from screenshot */
+            color: white;
+            padding: 15px 20px;
+            margin-bottom: 20px;
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        header h1 {
+            color: white;
+            margin: 0;
+            font-size: 24px;
+        }
+        .container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            padding: 0 20px 20px 20px;
+        }
+        .left-panel, .right-panel {
+            flex: 1;
+            min-width: 300px;
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            transition: all 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
+        }
+        .right-panel {
+            flex: 2;
+            min-width: 400px;
+        }
+        .left-panel:hover, .right-panel:hover {
+            box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+            transform: translateY(-2px);
+        }
+        .file-upload {
+            background: #E5F4F4; /* Light mint background */
+            border: 2px dashed #95B5B5; /* Medium teal border */
+            border-radius: 12px;
+            padding: 25px;
+            text-align: center;
+            margin-bottom: 20px;
+            transition: all 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
+        }
+        .file-upload:hover {
+            border-color: #1F2E2E; /* Dark teal on hover */
+            background: #D5EBEB; /* Slightly darker mint on hover */
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+        }
+        .file-upload label {
+            display: block;
+            cursor: pointer;
+            font-weight: 500;
+            margin-bottom: 10px;
+        }
+        .file-upload input {
+            display: none;
+        }
+        #imagePreview {
+            max-width: 100%;
+            max-height: 300px;
+            margin: 0 auto;
+            display: block;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            transition: all 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
+        }
+        #imagePreview:hover {
+            transform: scale(1.02);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.15);
+        }
+        .color-display {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 20px;
+        }
+        
+        /* Color box styles */
+        .color-box {
+            height: 70px;
+            flex: 1;
+            min-width: 70px;
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            position: relative;
+            overflow: hidden;
+            transition: all 0.2s cubic-bezier(0.2, 0.8, 0.2, 1);
+        }
+        
+        .color-box:hover {
+            transform: translateY(-2px) scale(1.03);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+        
+        /* Color information card styles */
+        .color-card {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: rgba(255,255,255,0.9);
+            padding: 5px;
+            font-size: 12px;
+            text-align: center;
+            transition: all 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
+            height: 20px;
+            overflow: hidden;
+        }
+        
+        .color-box:hover .color-card {
+            height: auto;
+            padding: 8px 5px;
+            box-shadow: 0 -2px 5px rgba(0,0,0,0.1);
+        }
+        
+        .color-emotion {
+            font-weight: 500;
+            margin-top: 4px;
+            color: #1F2E2E;
+            opacity: 0;
+            transform: translateY(5px);
+            transition: all 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
+            transition-delay: 0.1s;
+        }
+        
+        .color-description {
+            font-size: 10px;
+            margin-top: 4px;
+            opacity: 0;
+            transform: translateY(5px);
+            transition: all 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
+            transition-delay: 0.2s;
+            color: #555;
+        }
+        
+        .color-box:hover .color-emotion,
+        .color-box:hover .color-description {
+            opacity: 1;
+            transform: translateY(0);
+        }
+        
+        .harmony-section {
+            margin-top: 30px;
+        }
+        
+        .harmony-palette {
+            display: flex;
+            flex-wrap: wrap;
+            margin-top: 10px;
+            margin-bottom: 30px; /* Increased to accommodate hex codes */
+            border-radius: 8px;
+            overflow: visible; /* Changed from hidden to show hex labels */
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            transition: all 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
+            position: relative;
+        }
+        
+        .harmony-palette:hover {
+            transform: translateY(-2px) scale(1.01);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+        
+        .harmony-color {
+            height: 50px;
+            flex: 1 0 16.666%; /* Each color takes up at least 1/6 of the space */
+            min-width: 40px;
+            transition: all 0.2s cubic-bezier(0.2, 0.8, 0.2, 1);
+            position: relative;
+        }
+        
+        .harmony-color:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+            z-index: 10;
+        }
+        
+        .harmony-color-hex {
+            position: absolute;
+            bottom: -22px;
+            left: 0;
+            right: 0;
+            text-align: center;
+            font-size: 10px;
+            color: #1F2E2E;
+            background: rgba(255,255,255,0.7);
+            padding: 2px 0;
+            border-radius: 0 0 4px 4px;
+        }
+        
+        .harmony-color:first-child {
+            border-top-left-radius: 4px;
+            border-bottom-left-radius: 4px;
+        }
+        
+        .harmony-color:last-child {
+            border-top-right-radius: 4px;
+            border-bottom-right-radius: 4px;
+        }
+        
+        .harmony-title {
+            margin-bottom: 5px;
+            font-size: 16px;
+            color: #1F2E2E;
+            font-weight: 500;
+        }
+        
+        button {
+            background: #1F2E2E; /* Dark teal background */
+            border: none;
+            color: white;
+            padding: 10px 15px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: all 0.2s cubic-bezier(0.2, 0.8, 0.2, 1);
+        }
+        
+        button:hover {
+            background: #2D4242; /* Slightly lighter teal on hover */
+            transform: translateY(-1px);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        
+        button:active {
+            transform: translateY(1px);
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        
+        .action-button {
+            background-color: #C4E6E6; /* Light teal for action buttons like "View Report" in screenshot */
+            color: #1F2E2E;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: all 0.2s cubic-bezier(0.2, 0.8, 0.2, 1);
+        }
+        
+        .action-button:hover {
+            background-color: #AAD8D8; /* Slightly darker on hover */
+            transform: translateY(-1px);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        
+        .action-button:active {
+            transform: translateY(1px);
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        
+        .loading {
+            display: none;
+            text-align: center;
+            margin: 20px 0;
+        }
+        
+        .loading-spinner {
+            border: 4px solid rgba(0, 0, 0, 0.1);
+            border-radius: 50%;
+            border-top: 4px solid #1F2E2E;
+            width: 30px;
+            height: 30px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .tooltip {
+            position: absolute;
+            background: rgba(31, 46, 46, 0.9);
+            color: white;
+            padding: 8px 12px;
+            border-radius: 8px;
+            font-size: 12px;
+            line-height: 1.4;
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.3s;
+            max-width: 250px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+            z-index: 1000;
+        }
+        
+        .tooltip strong {
+            display: block;
+            margin-top: 5px;
+            font-size: 14px;
+            color: #C4E6E6;
+        }
+        
+        .tooltip small {
+            display: block;
+            margin-top: 3px;
+            opacity: 0.9;
+            font-weight: 300;
+        }
+        
+        .instructions {
+            background: #E5F4F4; /* Light mint background */
+            padding: 15px;
+            border-radius: 4px;
+            margin-bottom: 20px;
+            border-left: 4px solid #1F2E2E; /* Dark teal border */
+        }
+        
+        .instructions h3 {
+            margin-top: 0;
+            color: #1F2E2E; /* Dark teal header */
+        }
+        
+        .placeholder-text {
+            text-align: center;
+            color: #5A7A7A; /* Medium teal text */
+            padding: 30px 0;
+        }
+        
+        .sidebar-section {
+            background: #1F2E2E; /* Dark teal like sidebar */
+            color: white;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+        }
+        
+        .sidebar-section h3, .sidebar-section h2 {
+            color: #C4E6E6; /* Light mint/cyan text */
+            margin-top: 0;
+            font-weight: 500;
+        }
+        
+        /* MacOS-inspired animations */
+        @keyframes fade-in {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        
+        @keyframes scale-in {
+            from { transform: scale(0.95); opacity: 0; }
+            to { transform: scale(1); opacity: 1; }
+        }
+        
+        @keyframes bounce-in {
+            0% { transform: scale(0.9); opacity: 0; }
+            70% { transform: scale(1.04); opacity: 1; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+        
+        .mac-fade {
+            animation: fade-in 0.3s ease-out;
+        }
+        
+        .mac-scale {
+            animation: scale-in 0.4s cubic-bezier(0.2, 0.8, 0.2, 1);
+        }
+        
+        .mac-bounce {
+            animation: bounce-in 0.5s cubic-bezier(0.2, 0.8, 0.2, 1.2);
+        }
+        
+        /* Add tooltip and help elements */
+        .info-icon {
+            display: inline-block;
+            width: 16px;
+            height: 16px;
+            background-color: #C4E6E6;
+            color: #1F2E2E;
+            border-radius: 50%;
+            text-align: center;
+            line-height: 16px;
+            font-size: 12px;
+            font-weight: bold;
+            margin-left: 5px;
+            cursor: pointer;
+        }
+        
+        .color-help {
+            display: none;
+            position: absolute;
+            top: 45px;
+            right: 20px;
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.15);
+            max-width: 300px;
+            font-size: 13px;
+            line-height: 1.4;
+            z-index: 100;
+        }
+        
+        .close-help {
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            color: #1F2E2E;
+        }
+        
+        /* PDF report styles */
+        .pdf-button-container {
+            text-align: center;
+            margin: 20px 0;
+        }
+        
+        .pdf-button {
+            background-color: #1F2E2E;
+            color: white;
+            padding: 12px 20px;
+            border-radius: 8px;
+            font-size: 16px;
+            cursor: pointer;
+            border: none;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+            transition: all 0.2s cubic-bezier(0.2, 0.8, 0.2, 1);
+            display: inline-flex;
+            align-items: center;
+        }
+        
+        .pdf-button:hover {
+            background-color: #2a3e3e;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+        }
+        
+        .pdf-button:active {
+            transform: translateY(1px);
+            box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+        }
+        
+        .pdf-icon {
+            margin-right: 8px;
+            width: 20px;
+            height: 20px;
+        }
+        
+        .palette-description {
+            background-color: white;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 20px 0;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            transition: all 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
+        }
+        
+        .palette-description h3 {
+            margin-top: 0;
+            color: #1F2E2E;
+        }
+        
+        .palette-description p {
+            margin-bottom: 0;
+            line-height: 1.5;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>Color Harmony Picker</h1>
+        <button id="helpToggle" class="action-button">Show Help</button>
+    </header>
+    
+    <div class="instructions" id="instructionsPanel" style="display: none;">
+        <h3>How to use this tool:</h3>
+        <p>1. Upload a PNG image using the file selector below</p>
+        <p>2. Click the "Analyze Colors" button after selecting your image</p>
+        <p>3. Explore the extracted colors and their emotional meanings</p>
+        <p>4. Hover over any color to see detailed information and meaning</p>
+        <p>5. Click on any color to copy its HEX value</p>
+    </div>
+    
+    <div class="container">
+        <div class="left-panel">
+            <div class="sidebar-section">
+                <h3>Upload Image <span class="info-icon" id="upload-info">?</span></h3>
+            </div>
+            
+            <div id="uploadHelp" class="color-help">
+                <span class="close-help" id="closeUploadHelp">×</span>
+                <p>Only PNG images are supported for the best color accuracy.</p>
+                <p>You can drag and drop your image or click to select from your device.</p>
+            </div>
+            
+            <div class="file-upload">
+                <label for="imageUpload">Select a PNG image or drag it here</label>
+                <input type="file" id="imageUpload" accept="image/png">
+                <p>Supported format: PNG only</p>
+            </div>
+            
+            <div id="imageContainer" style="display: none;">
+                <div class="sidebar-section">
+                    <h3>Image Preview</h3>
+                </div>
+                <img id="imagePreview" src="" alt="Image Preview">
+                <div class="loading">
+                    <p>Analyzing colors...</p>
+                    <div class="loading-spinner"></div>
+                </div>
+                <button class="action-button" id="analyzeButton" style="margin-top: 15px; width: 100%;">Analyze Colors</button>
+            </div>
+        </div>
+        
+        <div class="right-panel">
+            <div id="noImagePlaceholder">
+                <div class="placeholder-text">
+                    <p>Upload an image to see color analysis</p>
+                </div>
+            </div>
+            
+            <div id="colorResults" style="display: none;">
+                <div class="sidebar-section">
+                    <h3>Color Emotions <span class="info-icon" id="emotion-info">?</span></h3>
+                    <p style="color: #C4E6E6; font-size: 12px; margin: 0;">
+                        Hover over colors to see meanings
+                    </p>
+                </div>
+                
+                <div id="emotionHelp" class="color-help">
+                    <span class="close-help" id="closeEmotionHelp">×</span>
+                    <p>Each color evokes different emotions based on its properties:</p>
+                    <p><strong>Hue:</strong> The actual color (red, blue, etc.) determines the basic emotion</p>
+                    <p><strong>Saturation:</strong> Color intensity affects energy level and emotion strength</p>
+                    <p><strong>Brightness:</strong> Light colors feel approachable, dark ones more serious</p>
+                </div>
+                
+                <div id="dominantColors" class="color-display"></div>
+                
+                <div id="palette-description" class="palette-description">
+                    <h3>Color Palette Analysis</h3>
+                    <p id="palette-description-text">Upload and analyze an image to see a description of its color palette.</p>
+                </div>
+                
+                <div class="harmony-section">
+                    <div class="sidebar-section">
+                        <h3>Color Harmonies <span class="info-icon" id="harmony-info">?</span></h3>
+                    </div>
+                    
+                    <div id="harmonyHelp" class="color-help">
+                        <span class="close-help" id="closeHarmonyHelp">×</span>
+                        <p><strong>Complementary:</strong> Colors opposite each other on the color wheel, plus split-complements</p>
+                        <p><strong>Analogous:</strong> Colors adjacent to each other on the color wheel</p>
+                        <p><strong>Triadic:</strong> Three colors evenly spaced around the color wheel</p>
+                        <p><strong>Monochromatic:</strong> Different shades and tints of the same color</p>
+                    </div>
+                    
+                    <div class="harmony-title">Complementary</div>
+                    <div id="complementaryPalette" class="harmony-palette"></div>
+                    
+                    <div class="harmony-title">Analogous</div>
+                    <div id="analogousPalette" class="harmony-palette"></div>
+                    
+                    <div class="harmony-title">Triadic</div>
+                    <div id="triadicPalette" class="harmony-palette"></div>
+                    
+                    <div class="harmony-title">Monochromatic</div>
+                    <div id="monochromaticPalette" class="harmony-palette"></div>
+                </div>
+                
+                <div class="pdf-button-container">
+                    <button id="generatePDF" class="pdf-button">
+                        <svg class="pdf-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                            <polyline points="14 2 14 8 20 8"></polyline>
+                            <line x1="12" y1="18" x2="12" y2="12"></line>
+                            <line x1="9" y1="15" x2="15" y2="15"></line>
+                        </svg>
+                        Download PDF Report
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div id="tooltip" class="tooltip"></div>
+
+    <script>
+        // DOM Elements
+        const imageUpload = document.getElementById('imageUpload');
+        const imagePreview = document.getElementById('imagePreview');
+        const imageContainer = document.getElementById('imageContainer');
+        const colorResults = document.getElementById('colorResults');
+        const noImagePlaceholder = document.getElementById('noImagePlaceholder');
+        const dominantColorsContainer = document.getElementById('dominantColors');
+        const loadingElement = document.querySelector('.loading');
+        const tooltip = document.getElementById('tooltip');
+        const analyzeButton = document.getElementById('analyzeButton');
+        
+        // Add event listener for help toggle button
+        document.getElementById('helpToggle').addEventListener('click', function() {
+            const instructionsPanel = document.getElementById('instructionsPanel');
+            const isHidden = instructionsPanel.style.display === 'none';
+            instructionsPanel.style.display = isHidden ? 'block' : 'none';
+            this.textContent = isHidden ? 'Hide Help' : 'Show Help';
+            
+            // Add animation
+            if (isHidden) {
+                instructionsPanel.classList.add('mac-scale');
+            }
+        });
+        
+        // Event listeners for harmony help
+        document.getElementById('harmony-info').addEventListener('click', function() {
+            const harmonyHelp = document.getElementById('harmonyHelp');
+            harmonyHelp.style.display = 'block';
+            harmonyHelp.classList.add('mac-scale');
+        });
+        
+        document.getElementById('closeHarmonyHelp').addEventListener('click', function() {
+            document.getElementById('harmonyHelp').style.display = 'none';
+        });
+        
+        // Event listeners for upload help
+        document.getElementById('upload-info').addEventListener('click', function() {
+            const uploadHelp = document.getElementById('uploadHelp');
+            uploadHelp.style.display = 'block';
+            uploadHelp.classList.add('mac-scale');
+        });
+        
+        document.getElementById('closeUploadHelp').addEventListener('click', function() {
+            document.getElementById('uploadHelp').style.display = 'none';
+        });
+        
+        // Event listeners for emotion help
+        document.getElementById('emotion-info').addEventListener('click', function() {
+            const emotionHelp = document.getElementById('emotionHelp');
+            emotionHelp.style.display = 'block';
+            emotionHelp.classList.add('mac-scale');
+        });
+        
+        document.getElementById('closeEmotionHelp').addEventListener('click', function() {
+            document.getElementById('emotionHelp').style.display = 'none';
+        });
+        
+        // File upload validation
+        imageUpload.addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                // Check if the file is a PNG
+                if (file.type !== 'image/png') {
+                    alert('Please select a PNG file. Other image formats are not supported.');
+                    this.value = ''; // Clear the file input
+                    return;
+                }
+                
+                const reader = new FileReader();
+                
+                reader.onload = function(event) {
+                    // Display the image with animation
+                    imagePreview.src = event.target.result;
+                    imageContainer.style.display = 'block';
+                    imageContainer.classList.add('mac-scale');
+                    noImagePlaceholder.style.display = 'none';
+                    
+                    // Set the image but wait for user to click Analyze button
+                    analyzeButton.onclick = function() {
+                        loadingElement.style.display = 'block';
+                        loadingElement.classList.add('mac-fade');
+                        // Process the image (with a slight delay to allow UI updates)
+                        setTimeout(() => {
+                            processImage(event.target.result);
+                        }, 100);
+                    };
+                };
+                
+                reader.readAsDataURL(file);
+            }
+        });
+        
+        // Process the image and extract colors
+        function processImage(imageSrc) {
+            const img = new Image();
+            img.crossOrigin = "Anonymous";
+            
+            img.onload = function() {
+                // Create canvas to analyze the image
+                const canvas = document.createElement('canvas');
+                const ctx = canvas.getContext('2d');
+                
+                // Resize canvas to a manageable size for analysis
+                const maxSize = 300;
+                let width = img.width;
+                let height = img.height;
+                
+                if (width > height) {
+                    if (width > maxSize) {
+                        height = height * (maxSize / width);
+                        width = maxSize;
+                    }
+                } else {
+                    if (height > maxSize) {
+                        width = width * (maxSize / height);
+                        height = maxSize;
+                    }
+                }
+                
+                canvas.width = width;
+                canvas.height = height;
+                
+                // Draw image on canvas
+                ctx.drawImage(img, 0, 0, width, height);
+                
+                // Get image data
+                const imageData = ctx.getImageData(0, 0, width, height).data;
+                
+                // Extract colors using color quantization algorithm
+                const colors = extractColors(imageData, width, height);
+                
+                // Display the extracted colors
+                displayColors(colors);
+                
+                // Generate and display color harmonies
+                generateColorHarmonies(colors[0]); // Use the most dominant color
+                
+                // Generate palette description
+                const description = generatePaletteDescription(colors);
+                document.getElementById('palette-description-text').textContent = description;
+                
+                // Hide loading and show results with animation
+                loadingElement.style.display = 'none';
+                colorResults.style.display = 'block';
+                colorResults.classList.add('mac-scale');
+            };
+            
+            img.src = imageSrc;
+        }
+        
+        // Extract dominant colors from image data using a simple color quantization
+        function extractColors(imageData, width, height) {
+            // Create color map to count occurrences of each color
+            const colorMap = {};
+            const pixelCount = width * height;
+            
+            // Sample pixels (skip some for performance)
+            const sampleStep = Math.max(1, Math.floor(pixelCount / 5000));
+            
+            for (let i = 0; i < imageData.length; i += 4 * sampleStep) {
+                const r = imageData[i];
+                const g = imageData[i + 1];
+                const b = imageData[i + 2];
+                const a = imageData[i + 3];
+                
+                // Skip transparent pixels
+                if (a < 128) continue;
+                
+                // Simplify colors by quantizing them (group similar colors)
+                const quantR = Math.round(r / 16) * 16;
+                const quantG = Math.round(g / 16) * 16;
+                const quantB = Math.round(b / 16) * 16;
+                
+                const colorKey = `${quantR},${quantG},${quantB}`;
+                
+                if (colorMap[colorKey]) {
+                    colorMap[colorKey].count++;
+                    colorMap[colorKey].r += r;
+                    colorMap[colorKey].g += g;
+                    colorMap[colorKey].b += b;
+                } else {
+                    colorMap[colorKey] = {
+                        r: r,
+                        g: g,
+                        b: b,
+                        count: 1
+                    };
+                }
+            }
+            
+            // Convert to array and calculate average color for each bucket
+            const colorArray = Object.values(colorMap).map(color => {
+                return {
+                    r: Math.round(color.r / color.count),
+                    g: Math.round(color.g / color.count),
+                    b: Math.round(color.b / color.count),
+                    count: color.count
+                };
+            });
+            
+            // Sort by count (most frequent first)
+            colorArray.sort((a, b) => b.count - a.count);
+            
+            // Filter out similar colors to ensure diversity
+            const filteredColors = [];
+            for (const color of colorArray) {
+                if (filteredColors.length >= 8) break; // Limit to 8 colors
+                
+                // Check if this color is too similar to already selected colors
+                let isTooSimilar = false;
+                for (const selectedColor of filteredColors) {
+                    const colorDistance = Math.sqrt(
+                        Math.pow(color.r - selectedColor.r, 2) +
+                        Math.pow(color.g - selectedColor.g, 2) +
+                        Math.pow(color.b - selectedColor.b, 2)
+                    );
+                    
+                    if (colorDistance < 40) { // Threshold for considering colors similar
+                        isTooSimilar = true;
+                        break;
+                    }
+                }
+                
+                if (!isTooSimilar) {
+                    filteredColors.push(color);
+                }
+            }
+            
+            return filteredColors;
+        }
+        
+        // Function to get emotional meaning of a color
+        function getColorEmotion(r, g, b) {
+            // Convert RGB to HSL for easier analysis
+            const [h, s, l] = rgbToHslArray(r, g, b);
+            
+            // Initialize variables for emotion and description
+            let emotion = "";
+            let description = "";
+            
+            // Determine base emotion by hue
+            if (h >= 0 && h < 15 || h >= 345 && h <= 360) {
+                // Red
+                if (s > 0.7 && l > 0.5) {
+                    emotion = "Passionate";
+                    description = "Energetic and exciting, good for calls to action and highlighting important elements";
+                } else if (s > 0.7 && l < 0.4) {
+                    emotion = "Intense";
+                    description = "Powerful and commanding, can evoke strong emotions like anger or determination";
+                } else if (s < 0.4) {
+                    emotion = "Subtle warmth";
+                    description = "Gentle and comforting, creates a soft welcoming feeling";
+                } else {
+                    emotion = "Stimulating";
+                    description = "Attracts attention and creates energy, good for emphasis";
+                }
+            } else if (h >= 15 && h < 45) {
+                // Orange
+                if (s > 0.7 && l > 0.5) {
+                    emotion = "Enthusiastic";
+                    description = "Playful and energetic, creates a sense of fun and creativity";
+                } else if (l < 0.3) {
+                    emotion = "Earthy";
+                    description = "Grounded and stable, good for creating a sense of reliability";
+                } else if (s < 0.5) {
+                    emotion = "Gentle warmth";
+                    description = "Adds a soft glow, creates a sense of comfort and accessibility";
+                } else {
+                    emotion = "Friendly";
+                    description = "Warm and inviting, encourages social interaction";
+                }
+            } else if (h >= 45 && h < 75) {
+                // Yellow
+                if (s > 0.8 && l > 0.6) {
+                    emotion = "Joyful";
+                    description = "Bright and happy, creates optimism and positivity";
+                } else if (l < 0.4) {
+                    emotion = "Antiqued";
+                    description = "Historical and established, suggests permanence and tradition";
+                } else if (s < 0.4) {
+                    emotion = "Subtle";
+                    description = "Delicate and elegant, creates a sophisticated atmosphere";
+                } else {
+                    emotion = "Cheerful";
+                    description = "Uplifting and bright, encourages positive emotions";
+                }
+            } else if (h >= 75 && h < 155) {
+                // Green
+                if (s > 0.7 && l > 0.4) {
+                    emotion = "Fresh";
+                    description = "Natural and vibrant, suggests growth and renewal";
+                } else if (l < 0.3) {
+                    emotion = "Mysterious";
+                    description = "Deep and enigmatic, creates a sense of intrigue";
+                } else if (s < 0.4) {
+                    emotion = "Peaceful";
+                    description = "Calming and gentle, provides a sense of balance";
+                } else {
+                    emotion = "Harmonious";
+                    description = "Balanced and natural, creates a sense of wellness and stability";
+                }
+            } else if (h >= 155 && h < 195) {
+                // Cyan
+                if (s > 0.7 && l > 0.5) {
+                    emotion = "Refreshing";
+                    description = "Clean and invigorating, creates a sense of clarity";
+                } else if (l < 0.4) {
+                    emotion = "Deep";
+                    description = "Thoughtful and introspective, encourages contemplation";
+                } else if (s < 0.4) {
+                    emotion = "Subtle";
+                    description = "Quiet and gentle, creates a soft ambiance";
+                } else {
+                    emotion = "Soothing";
+                    description = "Calm and clear, promotes relaxation and clarity";
+                }
+            } else if (h >= 195 && h < 255) {
+                // Blue
+                if (s > 0.7 && l > 0.5) {
+                    emotion = "Trustworthy";
+                    description = "Reliable and confident, builds credibility and security";
+                } else if (l < 0.3) {
+                    emotion = "Authoritative";
+                    description = "Powerful and established, creates a sense of importance";
+                } else if (s < 0.4) {
+                    emotion = "Tranquil";
+                    description = "Quiet and serene, promotes peaceful feelings";
+                } else {
+                    emotion = "Calm";
+                    description = "Peaceful and composed, reduces tension and anxiety";
+                }
+            } else if (h >= 255 && h < 315) {
+                // Purple
+                if (s > 0.7 && l > 0.5) {
+                    emotion = "Creative";
+                    description = "Imaginative and inspiring, encourages innovation";
+                } else if (l < 0.3) {
+                    emotion = "Luxurious";
+                    description = "Rich and prestigious, creates a sense of exclusivity";
+                } else if (s < 0.4) {
+                    emotion = "Romantic";
+                    description = "Dreamy and tender, evokes gentle emotions";
+                } else {
+                    emotion = "Mysterious";
+                    description = "Intriguing and mystical, creates a sense of wonder";
+                }
+            } else if (h >= 315 && h < 345) {
+                // Pink/Magenta
+                if (s > 0.7 && l > 0.5) {
+                    emotion = "Playful";
+                    description = "Fun and energetic, creates excitement and joy";
+                } else if (l < 0.4) {
+                    emotion = "Sophisticated";
+                    description = "Elegant and refined, suggests luxury with edge";
+                } else if (s < 0.4) {
+                    emotion = "Delicate";
+                    description = "Soft and gentle, creates a sense of tenderness";
+                } else {
+                    emotion = "Romantic";
+                    description = "Sweet and loving, evokes affection and warmth";
+                }
+            }
+            
+            // Special case for grays (very low saturation)
+            if (s < 0.15) {
+                if (l < 0.2) {
+                    emotion = "Powerful";
+                    description = "Bold and strong, creates dramatic emphasis and authority";
+                } else if (l > 0.8) {
+                    emotion = "Pure";
+                    description = "Clean and minimal, suggests simplicity and openness";
+                } else {
+                    emotion = "Neutral";
+                    description = "Balanced and timeless, provides stability and sophistication";
+                }
+            }
+            
+            return { emotion, description };
+        }
+        
+        // Add animation classes when displaying elements
+        function displayColors(colors) {
+            dominantColorsContainer.innerHTML = '';
+            
+            colors.forEach((color, index) => {
+                const hexColor = rgbToHex(color.r, color.g, color.b);
+                const rgbValue = `rgb(${color.r}, ${color.g}, ${color.b})`;
+                const hslValue = rgbToHsl(color.r, color.g, color.b);
+                const { emotion, description } = getColorEmotion(color.r, color.g, color.b);
+                
+                const colorBox = document.createElement('div');
+                colorBox.className = 'color-box color-copy';
+                colorBox.style.backgroundColor = hexColor;
+                colorBox.dataset.color = hexColor;
+                
+                // Add staggered animation delay for each color box
+                colorBox.style.animation = `bounce-in 0.5s cubic-bezier(0.2, 0.8, 0.2, 1.2)`;
+                colorBox.style.animationDelay = `${index * 0.05}s`;
+                
+                const colorCard = document.createElement('div');
+                colorCard.className = 'color-card';
+                
+                const colorHex = document.createElement('div');
+                colorHex.className = 'color-hex';
+                colorHex.textContent = hexColor;
+                
+                const colorEmotion = document.createElement('div');
+                colorEmotion.className = 'color-emotion';
+                colorEmotion.textContent = emotion;
+                
+                const colorDescription = document.createElement('div');
+                colorDescription.className = 'color-description';
+                colorDescription.textContent = description;
+                
+                colorCard.appendChild(colorHex);
+                colorCard.appendChild(colorEmotion);
+                colorCard.appendChild(colorDescription);
+                
+                colorBox.appendChild(colorCard);
+                dominantColorsContainer.appendChild(colorBox);
+                
+                // Add tooltip with all color formats and emotional meaning on hover
+                colorBox.addEventListener('mouseover', function(e) {
+                    const { emotion, description } = getColorEmotion(color.r, color.g, color.b);
+                    showTooltip(e, `${hexColor}<br>${rgbValue}<br>${hslValue}<br><strong>${emotion}</strong><br><small>${description}</small>`);
+                });
+                
+                colorBox.addEventListener('mouseout', function() {
+                    hideTooltip();
+                });
+                
+                // Copy color value on click using a fallback method
+                colorBox.addEventListener('click', function() {
+                    // Try to copy using a more compatible method
+                    copyToClipboard(hexColor, () => {
+                        const originalText = colorCard.querySelector('.color-hex').textContent;
+                        colorCard.querySelector('.color-hex').textContent = 'Copied!';
+                        setTimeout(() => {
+                            colorCard.querySelector('.color-hex').textContent = originalText;
+                        }, 1000);
+                    });
+                });
+            });
+        }
+        
+        // Generate color harmonies based on a main color
+        function generateColorHarmonies(mainColor) {
+            // Convert RGB to HSL for easier manipulation
+            const [h, s, l] = rgbToHslArray(mainColor.r, mainColor.g, mainColor.b);
+            
+            // Generate complementary colors (expanded with split complements)
+            const complementary = [
+                [h, s, l],                           // Original color
+                [(h + 180) % 360, s, l],             // Direct complement
+                [(h + 150) % 360, s, l],             // Split complement 1
+                [(h + 210) % 360, s, l],             // Split complement 2
+                [(h + 165) % 360, s * 0.9, l],       // Near complement 1
+                [(h + 195) % 360, s * 0.9, l]        // Near complement 2
+            ];
+            displayColorHarmony(complementaryPalette, complementary);
+            
+            // Generate analogous colors (expanded to 5 colors)
+            const analogous = [
+                [(h - 40 + 360) % 360, s, l],        // Further left
+                [(h - 20 + 360) % 360, s, l],        // Near left
+                [h, s, l],                           // Original color
+                [(h + 20) % 360, s, l],              // Near right
+                [(h + 40) % 360, s, l],              // Further right
+                [(h - 30 + 360) % 360, s * 0.8, l],  // Muted left
+                [(h + 30) % 360, s * 0.8, l]         // Muted right
+            ];
+            displayColorHarmony(analogousPalette, analogous);
+            
+            // Generate triadic colors (expanded with variations)
+            const triadic = [
+                [h, s, l],                          // Original color
+                [(h + 120) % 360, s, l],            // Triadic color 1
+                [(h + 240) % 360, s, l],            // Triadic color 2
+                [h, s * 0.7, l],                    // Muted original
+                [(h + 120) % 360, s * 0.7, l],      // Muted triadic 1
+                [(h + 240) % 360, s * 0.7, l],      // Muted triadic 2
+                [h, s, Math.min(0.9, l + 0.15)],    // Lighter original
+                [(h + 120) % 360, s, Math.min(0.9, l + 0.15)], // Lighter triadic 1
+                [(h + 240) % 360, s, Math.min(0.9, l + 0.15)]  // Lighter triadic 2
+            ];
+            displayColorHarmony(triadicPalette, triadic);
+            
+            // Generate monochromatic shades
+            const monochromatic = [
+                [h, s, Math.max(0.2, l - 0.3)],
+                [h, s, Math.max(0.3, l - 0.15)],
+                [h, s, l],
+                [h, s, Math.min(0.85, l + 0.15)],
+                [h, s, Math.min(0.95, l + 0.3)]
+            ];
+            displayColorHarmony(monochromaticPalette, monochromatic);
+        }
+        
+        // Display a color harmony in the provided container with animations
+        function displayColorHarmony(container, colors) {
+            container.innerHTML = '';
+            
+            colors.forEach((hslColor, index) => {
+                const [r, g, b] = hslToRgb(hslColor[0], hslColor[1], hslColor[2]);
+                const hexColor = rgbToHex(r, g, b);
+                const { emotion, description } = getColorEmotion(r, g, b);
+                
+                const colorElement = document.createElement('div');
+                colorElement.className = 'harmony-color color-copy';
+                colorElement.style.backgroundColor = hexColor;
+                colorElement.dataset.color = hexColor;
+                colorElement.dataset.emotion = emotion;
+                colorElement.dataset.description = description;
+                
+                // Add hex label
+                const hexLabel = document.createElement('div');
+                hexLabel.className = 'harmony-color-hex';
+                hexLabel.textContent = hexColor;
+                colorElement.appendChild(hexLabel);
+                
+                // Add staggered animation delay
+                colorElement.style.animation = `scale-in 0.4s cubic-bezier(0.2, 0.8, 0.2, 1)`;
+                colorElement.style.animationDelay = `${index * 0.05}s`;
+                
+                container.appendChild(colorElement);
+                
+                // Add tooltip with color information and emotional meaning
+                colorElement.addEventListener('mouseover', function(e) {
+                    showTooltip(e, `${hexColor}<br><strong>${emotion}</strong><br><small>${description}</small>`);
+                });
+                
+                colorElement.addEventListener('mouseout', function() {
+                    hideTooltip();
+                });
+                
+                // Copy color on click using fallback method
+                colorElement.addEventListener('click', function(event) {
+                    // Try to copy using a more compatible method
+                    copyToClipboard(hexColor, () => {
+                        showTooltip(event, 'Copied!');
+                        setTimeout(hideTooltip, 1000);
+                    });
+                });
+            });
+        }
+        
+        // Color conversion utilities
+        function rgbToHex(r, g, b) {
+            return '#' + ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1).toUpperCase();
+        }
+        
+        function rgbToHsl(r, g, b) {
+            const [h, s, l] = rgbToHslArray(r, g, b);
+            return `hsl(${Math.round(h)}°, ${Math.round(s * 100)}%, ${Math.round(l * 100)}%)`;
+        }
+        
+        function rgbToHslArray(r, g, b) {
+            r /= 255;
+            g /= 255;
+            b /= 255;
+            
+            const max = Math.max(r, g, b);
+            const min = Math.min(r, g, b);
+            let h, s, l = (max + min) / 2;
+            
+            if (max === min) {
+                h = s = 0; // achromatic
+            } else {
+                const d = max - min;
+                s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+                
+                switch (max) {
+                    case r: h = (g - b) / d + (g < b ? 6 : 0); break;
+                    case g: h = (b - r) / d + 2; break;
+                    case b: h = (r - g) / d + 4; break;
+                }
+                
+                h /= 6;
+            }
+            
+            return [h * 360, s, l];
+        }
+        
+        function hslToRgb(h, s, l) {
+            h /= 360;
+            let r, g, b;
+            
+            if (s === 0) {
+                r = g = b = l; // achromatic
+            } else {
+                const hue2rgb = (p, q, t) => {
+                    if (t < 0) t += 1;
+                    if (t > 1) t -= 1;
+                    if (t < 1/6) return p + (q - p) * 6 * t;
+                    if (t < 1/2) return q;
+                    if (t < 2/3) return p + (q - p) * (2/3 - t) * 6;
+                    return p;
+                };
+                
+                const q = l < 0.5 ? l * (1 + s) : l + s - l * s;
+                const p = 2 * l - q;
+                
+                r = hue2rgb(p, q, h + 1/3);
+                g = hue2rgb(p, q, h);
+                b = hue2rgb(p, q, h - 1/3);
+            }
+            
+            return [Math.round(r * 255), Math.round(g * 255), Math.round(b * 255)];
+        }
+        
+        // Add clipboard functionality with fallback methods
+        function copyToClipboard(text, onSuccess) {
+            // Method 1: Try using the modern Clipboard API with error handling
+            if (navigator.clipboard && window.isSecureContext) {
+                navigator.clipboard.writeText(text)
+                    .then(onSuccess)
+                    .catch(err => {
+                        // Method 2: Try using the older document.execCommand method
+                        fallbackCopyToClipboard(text, onSuccess);
+                    });
+            } else {
+                // Method 2: For browsers without clipboard API or non-secure contexts
+                fallbackCopyToClipboard(text, onSuccess);
+            }
+        }
+        
+        function fallbackCopyToClipboard(text, onSuccess) {
+            try {
+                // Create a temporary input element
+                const textArea = document.createElement('textarea');
+                textArea.value = text;
+                
+                // Make the textarea out of viewport
+                textArea.style.position = 'fixed';
+                textArea.style.left = '-999999px';
+                textArea.style.top = '-999999px';
+                document.body.appendChild(textArea);
+                
+                // Select and copy
+                textArea.focus();
+                textArea.select();
+                
+                const success = document.execCommand('copy');
+                document.body.removeChild(textArea);
+                
+                if (success) {
+                    onSuccess();
+                } else {
+                    // Just display the color more prominently for manual copying
+                    showColorDisplay(text);
+                }
+            } catch (err) {
+                // Just display the color more prominently for manual copying
+                showColorDisplay(text);
+            }
+        }
+        
+        function showColorDisplay(text) {
+            // Create a modal-like display showing the color value for manual copying
+            const display = document.createElement('div');
+            display.style.position = 'fixed';
+            display.style.top = '50%';
+            display.style.left = '50%';
+            display.style.transform = 'translate(-50%, -50%) scale(0.9)';
+            display.style.background = 'white';
+            display.style.padding = '20px';
+            display.style.borderRadius = '12px';
+            display.style.boxShadow = '0 10px 25px rgba(0,0,0,0.2)';
+            display.style.zIndex = '1000';
+            display.style.textAlign = 'center';
+            display.style.opacity = '0';
+            display.style.transition = 'all 0.3s cubic-bezier(0.2, 0.8, 0.2, 1.2)';
+            
+            display.innerHTML = `
+                <p>Could not copy automatically. Please select and copy this color code:</p>
+                <div style="font-size: 24px; margin: 10px 0; font-weight: bold; user-select: all;">${text}</div>
+                <button id="closeColorDisplay" style="padding: 8px 16px; background: #1F2E2E; color: white; border: none; border-radius: 8px; cursor: pointer;">Close</button>
+            `;
+            
+            document.body.appendChild(display);
+            
+            // Trigger animation
+            setTimeout(() => {
+                display.style.opacity = '1';
+                display.style.transform = 'translate(-50%, -50%) scale(1)';
+            }, 10);
+            
+            // Select the text for easier copying
+            const range = document.createRange();
+            range.selectNode(display.querySelector('div'));
+            window.getSelection().removeAllRanges();
+            window.getSelection().addRange(range);
+            
+            // Close button handler
+            document.getElementById('closeColorDisplay').addEventListener('click', () => {
+                display.style.opacity = '0';
+                display.style.transform = 'translate(-50%, -50%) scale(0.9)';
+                setTimeout(() => {
+                    document.body.removeChild(display);
+                }, 300);
+            });
+        }
+        
+        // Add functions to analyze and describe the overall palette
+        function generatePaletteDescription(colors) {
+            // Get primary emotional traits
+            const emotionalTraits = colors.slice(0, 5).map(color => {
+                const { emotion } = getColorEmotion(color.r, color.g, color.b);
+                return emotion.toLowerCase();
+            });
+            
+            // Calculate overall saturation and brightness
+            let totalSaturation = 0;
+            let totalBrightness = 0;
+            let totalWarmth = 0;
+            
+            colors.forEach(color => {
+                const [h, s, l] = rgbToHslArray(color.r, color.g, color.b);
+                totalSaturation += s;
+                totalBrightness += l;
+                
+                // Calculate warmth (reds, oranges, yellows are warm; blues, greens, purples are cool)
+                if ((h >= 0 && h < 60) || (h >= 300 && h <= 360)) {
+                    totalWarmth += 1; // Warm
+                } else if (h >= 180 && h < 300) {
+                    totalWarmth -= 1; // Cool
+                } // Neutrals (60-180) are considered neutral
+            });
+            
+            const avgSaturation = totalSaturation / colors.length;
+            const avgBrightness = totalBrightness / colors.length;
+            const warmthBalance = totalWarmth / colors.length;
+            
+            // Determine palette type
+            let paletteType = "";
+            
+            // Determine saturation character
+            let saturationChar = "";
+            if (avgSaturation > 0.7) {
+                saturationChar = "vibrant and bold";
+            } else if (avgSaturation > 0.4) {
+                saturationChar = "moderately saturated";
+            } else {
+                saturationChar = "subtle and muted";
+            }
+            
+            // Determine brightness character
+            let brightnessChar = "";
+            if (avgBrightness > 0.7) {
+                brightnessChar = "bright and airy";
+            } else if (avgBrightness > 0.4) {
+                brightnessChar = "balanced in tone";
+            } else {
+                brightnessChar = "deep and rich";
+            }
+            
+            // Determine warmth character
+            let warmthChar = "";
+            if (warmthBalance > 0.5) {
+                warmthChar = "predominantly warm";
+                paletteType = "warm";
+            } else if (warmthBalance < -0.5) {
+                warmthChar = "predominantly cool";
+                paletteType = "cool";
+            } else {
+                warmthChar = "balanced between warm and cool tones";
+                paletteType = "balanced";
+            }
+            
+            // Determine harmony and contrast
+            let harmonyChar = "";
+            let contrastLevel = "";
+            
+            // Simplified contrast detection
+            const colorVariance = calculateColorVariance(colors);
+            if (colorVariance > 80) {
+                contrastLevel = "high contrast";
+                harmonyChar = "dynamic and attention-grabbing";
+            } else if (colorVariance > 40) {
+                contrastLevel = "moderate contrast";
+                harmonyChar = "visually interesting while maintaining harmony";
+            } else {
+                contrastLevel = "low contrast";
+                harmonyChar = "subtle and harmonious";
+            }
+            
+            // Detect monochromatic, analogous, complementary tendencies
+            let colorSchemeType = detectColorSchemeType(colors);
+            
+            // Build description
+            let description = `This image features a ${saturationChar}, ${brightnessChar} color palette that is ${warmthChar}. `;
+            
+            description += `The colors create a ${contrastLevel} composition that appears ${harmonyChar}. `;
+            
+            if (colorSchemeType) {
+                description += `The palette follows a ${colorSchemeType} color scheme. `;
+            }
+            
+            // Add emotional impact
+            const uniqueTraits = [...new Set(emotionalTraits)];
+            if (uniqueTraits.length > 0) {
+                if (uniqueTraits.length === 1) {
+                    description += `Overall, the palette evokes a ${uniqueTraits[0]} feeling.`;
+                } else {
+                    const lastTrait = uniqueTraits.pop();
+                    description += `The colors evoke ${uniqueTraits.join(', ')} and ${lastTrait} qualities.`;
+                }
+            }
+            
+            // Add suggested applications based on palette type
+            description += ` This palette would work well for `;
+            
+            if (paletteType === "warm") {
+                if (avgSaturation > 0.6) {
+                    description += `energetic and engaging designs like restaurant branding, creative companies, or children's products.`;
+                } else {
+                    description += `welcoming and comforting designs like home goods, food packaging, or wellness brands.`;
+                }
+            } else if (paletteType === "cool") {
+                if (avgSaturation > 0.6) {
+                    description += `tech products, modern interiors, or designs requiring a sense of innovation and clarity.`;
+                } else {
+                    description += `sophisticated applications like luxury products, professional services, or minimalist designs.`;
+                }
+            } else {
+                description += `versatile applications requiring balance, such as educational materials, inclusive brands, or multi-purpose designs.`;
+            }
+            
+            return description;
+        }
+        
+        function calculateColorVariance(colors) {
+            // Calculate variance between colors to estimate contrast
+            let totalVariance = 0;
+            
+            for (let i = 0; i < colors.length; i++) {
+                for (let j = i + 1; j < colors.length; j++) {
+                    const color1 = colors[i];
+                    const color2 = colors[j];
+                    
+                    // Calculate Euclidean distance in RGB space
+                    const distance = Math.sqrt(
+                        Math.pow(color1.r - color2.r, 2) +
+                        Math.pow(color1.g - color2.g, 2) +
+                        Math.pow(color1.b - color2.b, 2)
+                    );
+                    
+                    totalVariance += distance;
+                }
+            }
+            
+            // Normalize by number of comparisons
+            const numComparisons = (colors.length * (colors.length - 1)) / 2;
+            return totalVariance / numComparisons;
+        }
+        
+        function detectColorSchemeType(colors) {
+            if (colors.length < 3) return null;
+            
+            // Convert to HSL for better analysis
+            const hslColors = colors.map(color => {
+                return rgbToHslArray(color.r, color.g, color.b);
+            });
+            
+            // Extract hues
+            const hues = hslColors.map(hsl => hsl[0]);
+            
+            // Check for monochromatic (very similar hues)
+            let isMonochromatic = true;
+            const firstHue = hues[0];
+            for (let i = 1; i < hues.length; i++) {
+                const hueDiff = Math.abs(hues[i] - firstHue);
+                if (hueDiff > 30 && hueDiff < 330) {
+                    isMonochromatic = false;
+                    break;
+                }
+            }
+            
+            if (isMonochromatic) return "monochromatic";
+            
+            // Check for analogous (adjacent hues)
+            let isAnalogous = true;
+            hues.sort((a, b) => a - b);
+            for (let i = 1; i < hues.length; i++) {
+                // Wrap around the color wheel for the first and last hue
+                let diff = Math.min(
+                    Math.abs(hues[i] - hues[i-1]),
+                    360 - Math.abs(hues[i] - hues[i-1])
+                );
+                
+                if (diff > 60) {
+                    isAnalogous = false;
+                    break;
+                }
+            }
+            
+            if (isAnalogous) return "analogous";
+            
+            // Check for complementary (opposite hues)
+            for (let i = 0; i < hues.length; i++) {
+                for (let j = i + 1; j < hues.length; j++) {
+                    const diff = Math.abs(hues[i] - hues[j]);
+                    if (Math.abs(diff - 180) < 30) {
+                        return "complementary";
+                    }
+                }
+            }
+            
+            // If no specific scheme is detected
+            return "mixed";
+        }
+        
+        // Tooltip functionality
+        function showTooltip(event, text) {
+            tooltip.innerHTML = text;
+            tooltip.style.left = (event.pageX + 10) + 'px';
+            tooltip.style.top = (event.pageY + 10) + 'px';
+            tooltip.style.opacity = 1;
+        }
+        
+        function hideTooltip() {
+            tooltip.style.opacity = 0;
+        }
+        
+        // Add drag and drop functionality
+        const dropZone = document.querySelector('.file-upload');
+        
+        ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+            dropZone.addEventListener(eventName, preventDefaults, false);
+        });
+        
+        function preventDefaults(e) {
+            e.preventDefault();
+            e.stopPropagation();
+        }
+        
+        ['dragenter', 'dragover'].forEach(eventName => {
+            dropZone.addEventListener(eventName, highlight, false);
+        });
+        
+        ['dragleave', 'drop'].forEach(eventName => {
+            dropZone.addEventListener(eventName, unhighlight, false);
+        });
+        
+        function highlight() {
+            dropZone.style.borderColor = '#1F2E2E';
+            dropZone.style.backgroundColor = '#D5EBEB';
+        }
+        
+        function unhighlight() {
+            dropZone.style.borderColor = '#95B5B5';
+            dropZone.style.backgroundColor = '#E5F4F4';
+        }
+        
+        function handleDrop(e) {
+            const dt = e.dataTransfer;
+            const files = dt.files;
+            
+            if (files.length) {
+                // Check if the file is a PNG
+                if (files[0].type !== 'image/png') {
+                    alert('Please select a PNG file. Other image formats are not supported.');
+                    return;
+                }
+                
+                imageUpload.files = files;
+                const event = new Event('change');
+                imageUpload.dispatchEvent(event);
+            }
+        }
+        
+        dropZone.addEventListener('drop', handleDrop, false);
+        
+        // PDF generation
+        function generatePDF() {
+            // Show loading indicator during PDF generation
+            const loadingIndicator = document.createElement('div');
+            loadingIndicator.className = 'loading';
+            loadingIndicator.style.display = 'block';
+            loadingIndicator.innerHTML = `
+                <p>Generating PDF report...</p>
+                <div class="loading-spinner"></div>
+            `;
+            document.body.appendChild(loadingIndicator);
+            
+            // Initialize jsPDF
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF({
+                orientation: 'portrait',
+                unit: 'mm',
+                format: 'a4'
+            });
+            
+            // Get the image
+            const img = document.getElementById('imagePreview');
+            const imgData = getImageDataURL(img);
+            
+            // Get dominant colors
+            const dominantColorsContainer = document.getElementById('dominantColors');
+            const colorBoxes = dominantColorsContainer.querySelectorAll('.color-box');
+            
+            // Get color harmonies
+            const complementaryPalette = document.getElementById('complementaryPalette');
+            const analogousPalette = document.getElementById('analogousPalette');
+            const triadicPalette = document.getElementById('triadicPalette');
+            const monochromaticPalette = document.getElementById('monochromaticPalette');
+            
+            // Get palette description
+            const paletteDescription = document.getElementById('palette-description-text').textContent;
+            
+            // Set up the PDF
+            doc.setFont('helvetica', 'bold');
+            doc.setFontSize(20);
+            doc.setTextColor(31, 46, 46); // Dark teal
+            doc.text('Color Harmony Analysis', 105, 15, { align: 'center' });
+            
+            // Add the image if available
+            if (imgData) {
+                const imgRatio = img.naturalWidth / img.naturalHeight;
+                const imgWidth = 180; // mm
+                const imgHeight = imgWidth / imgRatio;
+                
+                doc.addImage(imgData, 'PNG', (210 - imgWidth) / 2, 25, imgWidth, imgHeight);
+                
+                // Update starting y position for colors
+                var yPos = 25 + imgHeight + 15;
+            } else {
+                var yPos = 25;
+            }
+            
+            // Add palette description
+            doc.setFont('helvetica', 'bold');
+            doc.setFontSize(14);
+            doc.setTextColor(31, 46, 46);
+            doc.text('Color Palette Analysis', 15, yPos);
+            
+            doc.setFont('helvetica', 'normal');
+            doc.setFontSize(10);
+            doc.setTextColor(60, 60, 60);
+            
+            const descriptionLines = doc.splitTextToSize(paletteDescription, 180);
+            doc.text(descriptionLines, 15, yPos + 10);
+            
+            yPos += 10 + (descriptionLines.length * 5) + 10;
+            
+            // Add dominant colors
+            doc.setFont('helvetica', 'bold');
+            doc.setFontSize(14);
+            doc.setTextColor(31, 46, 46);
+            doc.text('Dominant Colors', 15, yPos);
+            
+            // Color boxes need more space
+            yPos += 10;
+            const colorBoxWidth = 25; // mm
+            const colorBoxHeight = 15; // mm
+            const colorBoxSpacing = 5; // mm
+            
+            let xPos = 15;
+            
+            // Draw dominant colors
+            colorBoxes.forEach((box) => {
+                const hexColor = box.dataset.color;
+                const { emotion } = getColorEmotionByHex(hexColor);
+                
+                // Convert hex to RGB for jsPDF
+                const r = parseInt(hexColor.slice(1, 3), 16);
+                const g = parseInt(hexColor.slice(3, 5), 16);
+                const b = parseInt(hexColor.slice(5, 7), 16);
+                
+                // Draw color rectangle
+                doc.setFillColor(r, g, b);
+                doc.rect(xPos, yPos, colorBoxWidth, colorBoxHeight, 'F');
+                
+                // Add hex code
+                doc.setFont('helvetica', 'normal');
+                doc.setFontSize(8);
+                doc.setTextColor(40, 40, 40);
+                doc.text(hexColor, xPos + colorBoxWidth / 2, yPos + colorBoxHeight + 5, { align: 'center' });
+                
+                // Add emotion
+                doc.setFontSize(7);
+                doc.text(emotion, xPos + colorBoxWidth / 2, yPos + colorBoxHeight + 10, { align: 'center' });
+                
+                // Update xPos for next color
+                xPos += colorBoxWidth + colorBoxSpacing;
+                
+                // Move to next row if needed
+                if (xPos > 170) {
+                    xPos = 15;
+                    yPos += colorBoxHeight + 15;
+                }
+            });
+            
+            // Move to next section
+            yPos += colorBoxHeight + 20;
+            
+            // Check if we need a new page
+            if (yPos > 260) {
+                doc.addPage();
+                yPos = 20;
+            }
+            
+            // Add color harmonies section
+            doc.setFont('helvetica', 'bold');
+            doc.setFontSize(14);
+            doc.setTextColor(31, 46, 46);
+            doc.text('Color Harmonies', 15, yPos);
+            yPos += 10;
+            
+            // Function to draw a harmony palette
+            function drawHarmonyPalette(title, palette, yPosition) {
+                // Add title
+                doc.setFont('helvetica', 'bold');
+                doc.setFontSize(11);
+                doc.setTextColor(31, 46, 46);
+                doc.text(title, 15, yPosition);
+                
+                // Draw colors
+                const colorElements = palette.querySelectorAll('.harmony-color');
+                const harmonyBoxWidth = 20; // mm
+                const harmonyBoxHeight = 12; // mm
+                const harmonyBoxSpacing = 5; // mm
+                
+                let xPosHarmony = 15;
+                const yPosHarmony = yPosition + 5;
+                
+                colorElements.forEach((element) => {
+                    const hexColor = element.dataset.color;
+                    
+                    // Convert hex to RGB for jsPDF
+                    const r = parseInt(hexColor.slice(1, 3), 16);
+                    const g = parseInt(hexColor.slice(3, 5), 16);
+                    const b = parseInt(hexColor.slice(5, 7), 16);
+                    
+                    // Draw color rectangle
+                    doc.setFillColor(r, g, b);
+                    doc.rect(xPosHarmony, yPosHarmony, harmonyBoxWidth, harmonyBoxHeight, 'F');
+                    
+                    // Add hex code
+                    doc.setFont('helvetica', 'normal');
+                    doc.setFontSize(7);
+                    doc.setTextColor(40, 40, 40);
+                    doc.text(hexColor, xPosHarmony + harmonyBoxWidth / 2, yPosHarmony + harmonyBoxHeight + 5, { align: 'center' });
+                    
+                    // Update xPos for next color
+                    xPosHarmony += harmonyBoxWidth + harmonyBoxSpacing;
+                });
+                
+                return yPosHarmony + harmonyBoxHeight + 10;
+            }
+            
+            // Draw each harmony palette
+            yPos = drawHarmonyPalette('Complementary', complementaryPalette, yPos);
+            
+            // Check if we need a new page
+            if (yPos > 260) {
+                doc.addPage();
+                yPos = 20;
+            }
+            
+            yPos = drawHarmonyPalette('Analogous', analogousPalette, yPos);
+            
+            // Check if we need a new page
+            if (yPos > 260) {
+                doc.addPage();
+                yPos = 20;
+            }
+            
+            yPos = drawHarmonyPalette('Triadic', triadicPalette, yPos);
+            
+            // Check if we need a new page
+            if (yPos > 260) {
+                doc.addPage();
+                yPos = 20;
+            }
+            
+            yPos = drawHarmonyPalette('Monochromatic', monochromaticPalette, yPos);
+            
+            // Add footer
+            const pageCount = doc.internal.getNumberOfPages();
+            for (let i = 1; i <= pageCount; i++) {
+                doc.setPage(i);
+                doc.setFont('helvetica', 'italic');
+                doc.setFontSize(8);
+                doc.setTextColor(100, 100, 100);
+                doc.text('Generated by Color Harmony Picker', 105, 290, { align: 'center' });
+                doc.text('Page ' + i + ' of ' + pageCount, 195, 290, { align: 'right' });
+            }
+            
+            // Save the PDF
+            const fileName = 'color-harmony-analysis.pdf';
+            doc.save(fileName);
+            
+            // Remove loading indicator
+            document.body.removeChild(loadingIndicator);
+        }
+        
+        // Helper function to get image data URL
+        function getImageDataURL(imgElement) {
+            // Create a canvas to draw the image
+            const canvas = document.createElement('canvas');
+            canvas.width = imgElement.naturalWidth;
+            canvas.height = imgElement.naturalHeight;
+            
+            // Draw the image
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(imgElement, 0, 0);
+            
+            // Return data URL
+            try {
+                return canvas.toDataURL('image/png');
+            } catch (e) {
+                console.error('Error creating image data URL:', e);
+                return null;
+            }
+        }
+        
+        // Helper function to get color emotion from hex
+        function getColorEmotionByHex(hexColor) {
+            // Convert hex to RGB
+            const r = parseInt(hexColor.slice(1, 3), 16);
+            const g = parseInt(hexColor.slice(3, 5), 16);
+            const b = parseInt(hexColor.slice(5, 7), 16);
+            
+            // Get emotion
+            return getColorEmotion(r, g, b);
+        }
+        
+        // Add event listener for PDF generation
+        document.getElementById('generatePDF').addEventListener('click', generatePDF);
+    </script>
+</body>
+</html>
