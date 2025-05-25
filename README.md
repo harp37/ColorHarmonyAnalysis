@@ -6,13 +6,13 @@ Discover, analyze, and harmonize colors from any image with this powerful color 
 Color Harmony Analysis is an elegant, intuitive web application that lets you extract color palettes from your images, understand their emotional impact, and generate harmonious color schemes for your designs. Built with a focus on both aesthetics and functionality, this tool helps designers, artists, and color enthusiasts make informed color decisions.
 
 🚀 Key Features
-🖼️ Instant Color Extraction - Upload any PNG image and automatically extract its dominant colors
-🌈 Color Harmony Generation - Create complementary, analogous, triadic, and monochromatic color schemes
-😊 Emotional Color Analysis - Understand the psychological impact of each color in your palette
-📋 One-Click Color Copying - Simply click on any color to copy its HEX code to your clipboard
-📊 Detailed Color Information - View HEX, RGB, and HSL values for each extracted color
-📱 Modern Responsive Interface - Elegant animations and a user-friendly design that works on all devices
-📄 PDF Report Generation - Download comprehensive color analysis reports for your projects or clients
+- 🖼️ Instant Color Extraction - Upload any PNG image and automatically extract its dominant colors
+- 🌈 Color Harmony Generation - Create complementary, analogous, triadic, and monochromatic color schemes
+- 😊 Emotional Color Analysis - Understand the psychological impact of each color in your palette
+- 📋 One-Click Color Copying - Simply click on any color to copy its HEX code to your clipboard
+- 📊 Detailed Color Information - View HEX, RGB, and HSL values for each extracted color
+- 📱 Modern Responsive Interface - Elegant animations and a user-friendly design that works on all devices
+- 📄 PDF Report Generation - Download comprehensive color analysis reports for your projects or clients
 
 🛠️ Installation
 Getting started with Color Harmony Analysis is incredibly simple:
